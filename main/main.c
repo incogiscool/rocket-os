@@ -10,6 +10,7 @@
 #define SPI_LORA_CS_PIN 2
 #define LORA_NSRT 21
 #define LORA_BUSY 16
+#define LORA_DO1 17
 
 #define BUILT_IN_LED_PIN 2
 
