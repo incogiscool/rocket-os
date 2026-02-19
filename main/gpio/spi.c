@@ -22,7 +22,8 @@ esp_err_t spi_init(spi_device_handle_t *handle) {
     spi_device_interface_config_t sx1262_device_config = {
         .clock_speed_hz = SPI_CLK_SPEED,
         .mode = 0, /* SPI mode 0 (CPOL=0, CPHA=0) */
-        .spics_io_num = SX1262_SPI_CS_PIN
+        .spics_io_num = SX1262_SPI_CS_PIN,
+        .queue_size = 1
     };
 
     return spi_bus_add_device(SPI2_HOST, &sx1262_device_config, handle);
