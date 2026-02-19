@@ -311,7 +311,7 @@ esp_err_t sx1262_receive(sx1262_t *device, uint8_t *data, uint8_t *len) {
     for (int i = 3; i < 3 + payload_len; i++) {
         read_cmd[i] = 0x00;
     }
-    
+
     memset(read_rx, 0, sizeof(read_rx));
 
     spi_read(device->device_handle, read_cmd, read_rx, sizeof(read_cmd));
@@ -323,4 +323,48 @@ esp_err_t sx1262_receive(sx1262_t *device, uint8_t *data, uint8_t *len) {
     ESP_LOGI(TAG, "Received %d bytes.", payload_len);
 
     return ESP_OK;
+}
+
+/* its 2:50 AM im tired this is straight copy paste from the big claude */
+esp_err_t sx1262_set_packet_params(sx1262_t *device, uint16_t preamble_len, uint8_t header_type, uint8_t payload_len, uint8_t crc, uint8_t invert_iq) {
+    sx1262_wait_busy();
+
+    uint8_t cmd[] = {
+        SX1262_OP_SET_PACKET_PARAMS,
+        (preamble_len >> 8) & 0xFF,
+        preamble_len & 0xFF,
+        header_type,
+        payload_len,
+        crc,
+        invert_iq
+    };
+
+    return spi_write(device->device_handle, cmd, sizeof(cmd));
+}
+
+/* its 3:01 AM im tired this is straight copy paste from the big claude */
+esp_err_t sx1262_set_dio_irq_params(sx1262_t *device) {
+    sx1262_wait_busy();
+
+    /* IRQ mask: enable TX_DONE (bit 0), RX_DONE (bit 1), TIMEOUT (bit 9), CRC_ERROR (bit 6) */
+    uint16_t irq_mask = (1 << 0) | (1 << 1) | (1 << 6) | (1 << 9);
+
+    /* Map all enabled IRQs to DIO1 */
+    uint16_t dio1_mask = irq_mask;
+    uint16_t dio2_mask = 0x0000;
+    uint16_t dio3_mask = 0x0000;
+
+    uint8_t cmd[] = {
+        SX1262_OP_SET_DIO_IRQ_PARAMS,
+        (irq_mask >> 8) & 0xFF,
+        irq_mask & 0xFF,
+        (dio1_mask >> 8) & 0xFF,
+        dio1_mask & 0xFF,
+        (dio2_mask >> 8) & 0xFF,
+        dio2_mask & 0xFF,
+        (dio3_mask >> 8) & 0xFF,
+        dio3_mask & 0xFF,
+    };
+
+    return spi_write(device->device_handle, cmd, sizeof(cmd));
 }
