@@ -96,20 +96,23 @@ void app_main(void) {
         return;
     }
 
+
+
+    char msg[] = "Hello!";
+    int len = sizeof(msg) / sizeof(char);
+    
+
     sx1262_set_standby(&radio, SX1262_STDBY_RC);
     sx1262_set_packet_type(&radio, SX1262_PACKET_TYPE_LORA);
     sx1262_set_rf_frequency(&radio, RF_FREQ_HZ);
     sx1262_set_mod_params_lora(&radio, 7, 0x04, 0x01, 0x00);
-    sx1262_set_packet_params(&radio, 12, 0x00, 64, 0x01, 0x00);
+    sx1262_set_packet_params(&radio, 12, 0x00, sizeof(msg), 0x01, 0x00);
     sx1262_set_dio_irq_params(&radio);
 
     ESP_LOGI(TAG, "Transmitter ready!");
 
-    int counter = 0;
 
     while (1) {
-        char msg[64];
-        int len = snprintf(msg, sizeof(msg), "Hello #%d", counter);
 
         ESP_LOGI(TAG, "Sending: %s", msg);
 
@@ -120,7 +123,6 @@ void app_main(void) {
             ESP_LOGE(TAG, "TX failed: %d", res);
         }
 
-        counter++;
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
 }
