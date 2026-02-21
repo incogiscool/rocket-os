@@ -1,6 +1,8 @@
 #include "sx1262.h"
 #include "esp_log.h"
 #include "driver/uart.h"
+#include "parse/nmea.h"
+#include <string.h>
 
 #define BUILT_IN_LED_PIN 2
 #define RF_FREQ_HZ 915000000 /* 915Mhz */
@@ -162,7 +164,8 @@ void app_main(void) {
     uart_set_pin(UART_NUM_1, GPS_TX, GPS_RX, GPS_RTS, GPS_CTS);
     uart_driver_install(UART_NUM_1, BUF_SIZE * 2, 0, 0, NULL, 0);
 
-        // Configure a temporary buffer for the incoming data
+    // Configure a temporary buffer for the incoming data
+    // Can we statically make this?
     uint8_t *data = (uint8_t *) malloc(BUF_SIZE);
 
     while (1) {
@@ -170,7 +173,14 @@ void app_main(void) {
         int len = uart_read_bytes(UART_NUM_1, data, BUF_SIZE - 1, pdMS_TO_TICKS(100));
         if (len > 0) {
             data[len] = '\0';
-            ESP_LOGI(TAG, "DATA: \n%s", (char *) data);
+            // Split into individual NMEA sentences by newline
+            char *line = strtok((char *)data, "\r\n");
+            while (line != NULL) {
+                if (line[0] == '$') {
+                    parseNmea(line);
+                }
+                line = strtok(NULL, "\r\n");
+            }
         }
 
         ESP_LOGI(TAG, "Length: %d", len);
