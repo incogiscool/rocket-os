@@ -2,7 +2,6 @@
 #pragma once
 
 #include "driver/spi_master.h"
-#include "driver/gpio.h"
 
 #define SPI_CLK_PIN 18
 #define SPI_MISO_PIN 19

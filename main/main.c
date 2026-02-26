@@ -2,6 +2,7 @@
 #include "esp_log.h"
 #include "driver/uart.h"
 #include "parse/nmea.h"
+#include "gps/neo6m.h"
 #include <string.h>
 
 #define BUILT_IN_LED_PIN 2
@@ -142,50 +143,19 @@
 
 static const char *TAG = "TX";
 
-#define GPS_RX 26 /* GPS TX -> Pin 26 */
-#define GPS_TX 27 /* GPS RX -> Pin 27 */
-#define GPS_RTS  (UART_PIN_NO_CHANGE)
-#define GPS_CTS  (UART_PIN_NO_CHANGE)
-#define BAUD_RATE 9600
-#define BUF_SIZE (1024)
+
 
 
 void app_main(void) {
-    
-    uart_config_t uart_config = {
-        .baud_rate = BAUD_RATE,
-        .data_bits = UART_DATA_8_BITS,
-        .parity    = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    };
+    uint8_t data[NEO6M_UART_BUF_SIZE];
 
-    uart_param_config(UART_NUM_1, &uart_config);
-    uart_set_pin(UART_NUM_1, GPS_TX, GPS_RX, GPS_RTS, GPS_CTS);
-    uart_driver_install(UART_NUM_1, BUF_SIZE * 2, 0, 0, NULL, 0);
-
-    // Configure a temporary buffer for the incoming data
-    // Can we statically make this?
-    uint8_t *data = (uint8_t *) malloc(BUF_SIZE);
+    neo6m_init();
 
     while (1) {
-        // Read data from the UART
-        int len = uart_read_bytes(UART_NUM_1, data, BUF_SIZE - 1, pdMS_TO_TICKS(100));
-        if (len > 0) {
-            data[len] = '\0';
-            // Split into individual NMEA sentences by newline
-            char *line = strtok((char *)data, "\r\n");
-            while (line != NULL) {
-                if (line[0] == '$') {
-                    parseNmea(line);
-                }
-                line = strtok(NULL, "\r\n");
-            }
-        }
+        int len = neo6m_read(data);
 
         ESP_LOGI(TAG, "Length: %d", len);
-        // Write data back to the UART
-        // uart_write_bytes(UART_NUM_1, (const char *) data, len);
+        ESP_LOGI(TAG, "\n\nDATA:\n%s", (char *) data);
     }
 
     
