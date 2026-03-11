@@ -136,39 +136,115 @@
 // }
 
 
-#include "sx1262.h"
+// #include "sx1262.h"
+// #include "esp_log.h"
+// #include "freertos/FreeRTOS.h"
+// #include "freertos/task.h"
+
+// static const char *TAG = "TX";
+
+
+
+
+// void app_main(void) {
+//     uint8_t data[NEO6M_UART_BUF_SIZE];
+
+//     neo6m_init();
+
+//     while (1) {
+//         int len = neo6m_read(data);
+
+//         if (len > 0) {
+//             ESP_LOGI(TAG, "Length: %d", len);
+
+//             // Split into individual NMEA sentences by newline
+//             char *line = strtok((char *)data, "\r\n");
+            
+//             while (line != NULL) {
+//                 if (line[0] == '$') {
+//                     parseNmea(line);
+//                 }
+//                 line = strtok(NULL, "\r\n");
+//             }
+//         }
+//     }
+// }
+
+
+
+#include "bme280_port.h"
+#include "gpio/i2c.h"
+#include "lib/BME280_SensorAPI/bme280.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-
-static const char *TAG = "TX";
 
 
 
 
 void app_main(void) {
-    uint8_t data[NEO6M_UART_BUF_SIZE];
+    i2c_master_bus_handle_t bus_handle;
+    // i2c_master_dev_handle_t bme280_dev_handle;
+    struct bme280_settings settings;
+    uint32_t period = 100000;
 
-    neo6m_init();
+    ESP_ERROR_CHECK(i2c_master_init(&bus_handle));
 
-    while (1) {
-        int len = neo6m_read(data);
+    // bme280_intf_ctx_t intf_ctx = {
+    //     .dev_handle = bme280_dev_handle,
+    // };
 
-        if (len > 0) {
-            ESP_LOGI(TAG, "Length: %d", len);
+    // struct bme280_dev device = {
+    //     .intf = BME280_I2C_INTF,
+    //     .intf_ptr = &intf_ctx,
+    //     .read = user_i2c_read,
+    //     .write = user_i2c_write,
+    //     .delay_us = user_delay_us
+    // };
 
-            // Split into individual NMEA sentences by newline
-            char *line = strtok((char *)data, "\r\n");
-            
-            while (line != NULL) {
-                if (line[0] == '$') {
-                    parseNmea(line);
-                }
-                line = strtok(NULL, "\r\n");
-            }
-        }
-    }
+    struct bme280_dev device;
+
+    device.read = user_i2c_read;
+    device.write = user_i2c_write;
+    device.delay_us = user_delay_us;
 
     
+    int8_t rslt = bme280_init(&device);
+
+    if (rslt != BME280_OK) {
+        printf("BME280 init failed: %d\n", rslt);
+    }
+
+    rslt = bme280_get_sensor_settings(&settings, &device);
+    // bme280_error_codes_print_result("bme280_get_sensor_settings", rslt);
+
+    /* Configuring the over-sampling rate, filter coefficient and standby time */
+    /* Overwrite the desired settings */
+    settings.filter = BME280_FILTER_COEFF_2;
+
+    /* Over-sampling rate for humidity, temperature and pressure */
+    settings.osr_h = BME280_OVERSAMPLING_1X;
+    settings.osr_p = BME280_OVERSAMPLING_1X;
+    settings.osr_t = BME280_OVERSAMPLING_1X;
+
+    /* Setting the standby time */
+    settings.standby_time = BME280_STANDBY_TIME_0_5_MS;
+
+    rslt = bme280_set_sensor_settings(BME280_SEL_ALL_SETTINGS, &settings, &device);
+    // bme280_error_codes_print_result("bme280_set_sensor_settings", rslt);
+
+    /* Always set the power mode after setting the configuration */
+    rslt = bme280_set_sensor_mode(BME280_POWERMODE_NORMAL, &device);
+    // bme280_error_codes_print_result("bme280_set_power_mode", rslt);
+
+    /* Calculate measurement time in microseconds */
+    rslt = bme280_cal_meas_delay(&period, &settings);
+    // bme280_error_codes_print_result("bme280_cal_meas_delay", rslt);
+
+    printf("\nPressure calculation (Data displayed are compensated values)\n");
+    printf("Measurement time : %lu us\n\n", (long unsigned int)period);
+
+    // rslt = get_pressure(period, &device);
+    // bme280_error_codes_print_result("get_pressure", rslt);
 
 }

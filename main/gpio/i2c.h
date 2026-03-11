@@ -9,7 +9,7 @@
 
 #define I2C_SCL_SPEED_HZ 100000 /* Set to 100khz */
 
-esp_err_t i2c_master_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *device_handle);
+esp_err_t i2c_master_init(i2c_master_bus_handle_t *bus_handle);
 esp_err_t i2c_master_write_to_slave(uint8_t device_address, uint8_t *data, size_t data_len);
 esp_err_t i2c_master_read_from_slave(uint8_t device_address, uint8_t *data, size_t data_len);
 
