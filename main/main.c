@@ -154,8 +154,19 @@ void app_main(void) {
     while (1) {
         int len = neo6m_read(data);
 
-        ESP_LOGI(TAG, "Length: %d", len);
-        ESP_LOGI(TAG, "\n\nDATA:\n%s", (char *) data);
+        if (len > 0) {
+            ESP_LOGI(TAG, "Length: %d", len);
+
+            // Split into individual NMEA sentences by newline
+            char *line = strtok((char *)data, "\r\n");
+            
+            while (line != NULL) {
+                if (line[0] == '$') {
+                    parseNmea(line);
+                }
+                line = strtok(NULL, "\r\n");
+            }
+        }
     }
 
     
