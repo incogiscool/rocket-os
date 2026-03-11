@@ -1,5 +1,7 @@
 #include "bme280_port.h"
 #include "freertos/FreeRTOS.h"
+#include <rom/ets_sys.h>
+#include <string.h>
 
 esp_err_t bme280_i2c_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *bme280_handle) {
     i2c_device_config_t dev_config = {
@@ -9,7 +11,7 @@ esp_err_t bme280_i2c_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_ha
     };
 
 
-    ESP_ERROR_CHECK(i2c_master_bus_add_device(*bus_handle, &dev_config, &bme280_handle));
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(*bus_handle, &dev_config, bme280_handle));
 
     return ESP_OK;
 }
