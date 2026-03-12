@@ -2,6 +2,9 @@
 #include "freertos/FreeRTOS.h"
 #include <rom/ets_sys.h>
 #include <string.h>
+#include "esp_log.h"
+
+static const char *TAG = "BME280_PORT";
 
 esp_err_t bme280_i2c_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *bme280_handle) {
     i2c_device_config_t dev_config = {
@@ -24,7 +27,7 @@ BME280_INTF_RET_TYPE user_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t
         ctx->dev_handle, /* Device handle */
         &reg_addr, 1, /* Transmitting the register we want to read from (size is 1 byte) */
         reg_data, len, /* Read buffer and exected size of the read buffer */
-        pdMS_TO_TICKS(100) /* Timeout */
+        pdMS_TO_TICKS(10000) /* Timeout */
     );
 
     return (ret == ESP_OK) ? BME280_OK : BME280_E_COMM_FAIL;
@@ -45,7 +48,7 @@ BME280_INTF_RET_TYPE user_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, u
     esp_err_t ret = i2c_master_transmit(
         ctx->dev_handle,
         buf, len + 1,
-        pdMS_TO_TICKS(100)
+        pdMS_TO_TICKS(10000)
     );
 
 
