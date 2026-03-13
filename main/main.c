@@ -186,42 +186,18 @@ void app_main(void) {
     i2c_master_bus_handle_t bus_handle;
     i2c_master_dev_handle_t bme280_dev_handle;
     struct bme280_settings settings;
+    struct bme280_dev *device;
     uint32_t period = 100000;
 
     ESP_ERROR_CHECK(i2c_master_init(&bus_handle));
-
-    i2c_device_config_t device_cfg = {
-        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-        .device_address = BME280_I2C_ADDR,
-        .scl_speed_hz = I2C_SCL_SPEED_HZ,
-    };
-
-    ESP_ERROR_CHECK(i2c_master_bus_add_device(bus_handle, &device_cfg, &bme280_dev_handle));
 
     bme280_intf_ctx_t intf_ctx = {
         .dev_handle = bme280_dev_handle,
     };
 
-    struct bme280_dev device = {
-        .intf = BME280_I2C_INTF,
-        .intf_ptr = &intf_ctx,
-        .read = user_i2c_read,
-        .write = user_i2c_write,
-        .delay_us = user_delay_us
-    };
+    ESP_ERROR_CHECK(bme280_full_init(&bus_handle, &bme280_dev_handle, &intf_ctx, &device));
 
-    // struct bme280_dev device;
-
-    // device.read = user_i2c_read;
-    // device.write = user_i2c_write;
-    // device.delay_us = user_delay_us;
-
-    
-    int8_t rslt = bme280_init(&device);
-
-    if (rslt != BME280_OK) {
-        printf("BME280 init failed: %d\n", rslt);
-    }
+    int8_t rslt;
 
     rslt = bme280_get_sensor_settings(&settings, &device);
     // bme280_error_codes_print_result("bme280_get_sensor_settings", rslt);
