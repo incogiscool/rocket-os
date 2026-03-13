@@ -65,6 +65,7 @@ void user_delay_us(uint32_t period_us, void *intf_ptr)
 esp_err_t bme280_full_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *bme280_dev_handle, bme280_intf_ctx_t *intf_ctx_ptr, struct bme280_dev *device_struct) {
 
     ESP_ERROR_CHECK(bme280_i2c_init(bus_handle, bme280_dev_handle));
+    intf_ctx_ptr->dev_handle = *bme280_dev_handle;
 
     struct bme280_dev device = {
         .intf = BME280_I2C_INTF,

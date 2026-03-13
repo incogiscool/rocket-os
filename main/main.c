@@ -191,9 +191,7 @@ void app_main(void) {
 
     ESP_ERROR_CHECK(i2c_master_init(&bus_handle));
 
-    bme280_intf_ctx_t intf_ctx = {
-        .dev_handle = bme280_dev_handle,
-    };
+    bme280_intf_ctx_t intf_ctx;
 
     ESP_ERROR_CHECK(bme280_full_init(&bus_handle, &bme280_dev_handle, &intf_ctx, &device));
 
@@ -207,9 +205,9 @@ void app_main(void) {
     settings.filter = BME280_FILTER_COEFF_2;
 
     /* Over-sampling rate for humidity, temperature and pressure */
-    settings.osr_h = BME280_OVERSAMPLING_1X;
-    settings.osr_p = BME280_OVERSAMPLING_1X;
-    settings.osr_t = BME280_OVERSAMPLING_1X;
+    settings.osr_h = BME280_OVERSAMPLING_4X;
+    settings.osr_p = BME280_OVERSAMPLING_4X;
+    settings.osr_t = BME280_OVERSAMPLING_4X;
 
     /* Setting the standby time */
     settings.standby_time = BME280_STANDBY_TIME_0_5_MS;

@@ -22,8 +22,8 @@ void user_delay_us(uint32_t period_us, void *intf_ptr);
 
 /**
  * [in] bus_handle, reference to the i2c bus handle
- * [in] bme280_dev_handle, reference to the i2c handle for the BME280 device
- * [in] intf_ctx_ptr, interface context for the bme280 - see below for example of this struct
+ * [out] bme280_dev_handle, reference to the i2c handle for the BME280 device
+ * [out] intf_ctx_ptr, interface context for the bme280 - see below for example of this struct
  * [out] device_struct, the complete BME280 driver config struct to be used in other functions
  * 
  * 
