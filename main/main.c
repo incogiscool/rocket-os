@@ -186,7 +186,7 @@ void app_main(void) {
     i2c_master_bus_handle_t bus_handle;
     i2c_master_dev_handle_t bme280_dev_handle;
     struct bme280_settings settings;
-    struct bme280_dev *device;
+    struct bme280_dev device;
     uint32_t period = 100000;
 
     ESP_ERROR_CHECK(i2c_master_init(&bus_handle));
