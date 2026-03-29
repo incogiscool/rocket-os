@@ -1,2 +1,2 @@
-idf_component_register(SRCS "main.c" "gpio/spi.c" "radio/sx1262.c" "parse/nmea.c" "gps/neo6m.c" "sensors/bme280_port.c" "lib/BME280_SensorAPI/bme280.c" "gpio/i2c.c"
-                    INCLUDE_DIRS "." "gpio" "radio" "parse" "gps" "sensors" "lib/BME280_SensorAPI")
+idf_component_register(SRCS "main.c" "gpio/spi.c" "radio/sx1262.c" "parse/nmea.c" "gps/neo6m.c" "sensors/bme280_port.c" "sensors/adxl345_port.c" "sensors/hmc5883l_port.c" "lib/BME280_SensorAPI/bme280.c" "lib/adxl345/src/driver_adxl345.c" "lib/hmc5883l/src/driver_hmc5883l.c" "gpio/i2c.c"
+                    INCLUDE_DIRS "." "gpio" "radio" "parse" "gps" "sensors" "lib/BME280_SensorAPI" "lib/adxl345/src" "lib/hmc5883l/src")

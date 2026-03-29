@@ -173,6 +173,8 @@ static const char *TAG = "MAIN";
 
 
 #include "bme280_port.h"
+#include "adxl345_port.h"
+#include "hmc5883l_port.h"
 #include "gpio/i2c.h"
 #include "lib/BME280_SensorAPI/bme280.h"
 #include "esp_log.h"
@@ -185,67 +187,83 @@ static const char *TAG = "MAIN";
 void app_main(void) {
     i2c_master_bus_handle_t bus_handle;
     i2c_master_dev_handle_t bme280_dev_handle;
+    i2c_master_dev_handle_t adxl345_dev_handle;
+    i2c_master_dev_handle_t hmc5883l_dev_handle;
     struct bme280_settings settings;
     struct bme280_dev device;
     uint32_t period = 100000;
 
     ESP_ERROR_CHECK(i2c_master_init(&bus_handle));
 
+    /* BME280 Init */
     bme280_intf_ctx_t intf_ctx;
-
     ESP_ERROR_CHECK(bme280_full_init(&bus_handle, &bme280_dev_handle, &intf_ctx, &device));
 
     int8_t rslt;
 
     rslt = bme280_get_sensor_settings(&settings, &device);
-    // bme280_error_codes_print_result("bme280_get_sensor_settings", rslt);
 
     /* Configuring the over-sampling rate, filter coefficient and standby time */
-    /* Overwrite the desired settings */
     settings.filter = BME280_FILTER_COEFF_2;
-
-    /* Over-sampling rate for humidity, temperature and pressure */
     settings.osr_h = BME280_OVERSAMPLING_4X;
     settings.osr_p = BME280_OVERSAMPLING_4X;
     settings.osr_t = BME280_OVERSAMPLING_4X;
-
-    /* Setting the standby time */
     settings.standby_time = BME280_STANDBY_TIME_0_5_MS;
 
     rslt = bme280_set_sensor_settings(BME280_SEL_ALL_SETTINGS, &settings, &device);
-    // bme280_error_codes_print_result("bme280_set_sensor_settings", rslt);
-
-    /* Always set the power mode after setting the configuration */
     rslt = bme280_set_sensor_mode(BME280_POWERMODE_NORMAL, &device);
-    // bme280_error_codes_print_result("bme280_set_power_mode", rslt);
+
+    /* ADXL345 Init */
+    adxl345_intf_ctx_t adxl345_intf_ctx;
+    adxl345_handle_t adxl345_handle;
+    ESP_ERROR_CHECK(adxl345_full_init(&bus_handle, &adxl345_dev_handle, &adxl345_intf_ctx, &adxl345_handle));
+
+    /* Configure ADXL345: +-16G range, 100Hz data rate, start measurement */
+    adxl345_set_rate(&adxl345_handle, ADXL345_RATE_100);
+    adxl345_set_range(&adxl345_handle, ADXL345_RANGE_16G);
+    adxl345_set_measure(&adxl345_handle, ADXL345_BOOL_TRUE);
+
+    /* HMC5883L init */
+    hmc5883l_intf_ctx_t hmc5883l_intf_ctx;
+    hmc5883l_handle_t hmc5883l_handle;
+    ESP_ERROR_CHECK(hmc5883l_full_init(&bus_handle, &hmc5883l_dev_handle, &hmc5883l_intf_ctx, &hmc5883l_handle));
+
+    /* Configure HMC5883L: default gain, 15Hz output, normal mode */
+    /* Need to calibrate? */
+    hmc5883l_set_gain(&hmc5883l_handle, HMC5883L_GAIN_1090);
+    hmc5883l_set_data_output_rate(&hmc5883l_handle, HMC5883L_DATA_OUTPUT_RATE_15);
+    hmc5883l_set_mode(&hmc5883l_handle, HMC5883L_MODE_NORMAL);
 
     while (1) {
 
-        /* Calculate measurement time in microseconds */
+        /* BME280 Read */
         rslt = bme280_cal_meas_delay(&period, &settings);
-        // bme280_error_codes_print_result("bme280_cal_meas_delay", rslt);
-
-        printf("\nPressure calculation (Data displayed are compensated values)\n");
-        printf("Measurement time : %lu us\n\n", (long unsigned int)period);
-
         struct bme280_data comp_data;
-
         rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, &device);
-
         if (rslt != BME280_OK) {
-            ESP_LOGE(TAG, "Something went wrong with getting sensor data.");
+            ESP_LOGE(TAG, "BME280 read failed.");
         }
+        ESP_LOGI(TAG, "Pressure: %f\nTemperature: %f\nHumidity: %f", comp_data.pressure, comp_data.temperature, comp_data.humidity);
 
-        
+        /* ADXL345 Read */
+        int16_t accel_raw[3];
+        float accel_g[3];
+        uint16_t accel_len = 1;
+        uint8_t accel_rslt = adxl345_read(&adxl345_handle, (int16_t (*)[3])&accel_raw, (float (*)[3])&accel_g, &accel_len);
+        if (accel_rslt != 0) {
+            ESP_LOGE(TAG, "ADXL345 read failed.");
+        }
+        ESP_LOGI(TAG, "Accel X: %.3f g, Y: %.3f g, Z: %.3f g", accel_g[0], accel_g[1], accel_g[2]);
 
-        ESP_LOGI(TAG, "Pressure: %f\nTemperature: %f\nHumidity: %f\n", comp_data.pressure, comp_data.temperature, comp_data.humidity);
+        /* HMC5883L Read */
+        int16_t mag_raw[3];
+        float mag_gauss[3];
+        uint8_t mag_rslt = hmc5883l_single_read(&hmc5883l_handle, mag_raw, mag_gauss);
+        if (mag_rslt != 0) {
+            ESP_LOGE(TAG, "HMC5883L read failed.");
+        }
+        ESP_LOGI(TAG, "Mag X: %.3f mG, Y: %.3f mG, Z: %.3f mG", mag_gauss[0], mag_gauss[1], mag_gauss[2]);
 
-    
         vTaskDelay(pdMS_TO_TICKS(500));
     }
-    
-
-    // rslt = get_pressure(period, &device);
-    // bme280_error_codes_print_result("get_pressure", rslt);
-
 }
