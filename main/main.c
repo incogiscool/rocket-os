@@ -214,9 +214,8 @@ void app_main(void) {
     rslt = bme280_set_sensor_mode(BME280_POWERMODE_NORMAL, &device);
 
     /* ADXL345 Init */
-    adxl345_intf_ctx_t adxl345_intf_ctx;
     adxl345_handle_t adxl345_handle;
-    ESP_ERROR_CHECK(adxl345_full_init(&bus_handle, &adxl345_dev_handle, &adxl345_intf_ctx, &adxl345_handle));
+    ESP_ERROR_CHECK(adxl345_full_init(&bus_handle, &adxl345_dev_handle, &adxl345_handle));
 
     /* Configure ADXL345: +-16G range, 100Hz data rate, start measurement */
     adxl345_set_rate(&adxl345_handle, ADXL345_RATE_100);

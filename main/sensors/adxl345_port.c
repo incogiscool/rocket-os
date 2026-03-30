@@ -72,10 +72,9 @@ void adxl345_debug_print_cb(const char *const fmt, ...) {
 }
 
 
-esp_err_t adxl345_full_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *adxl345_dev_handle, adxl345_intf_ctx_t *intf_ctx_ptr, adxl345_handle_t *handle) {
+esp_err_t adxl345_full_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *adxl345_dev_handle, adxl345_handle_t *handle) {
 
     ESP_ERROR_CHECK(adxl345_i2c_init(bus_handle, adxl345_dev_handle));
-    intf_ctx_ptr->dev_handle = *adxl345_dev_handle;
     s_adxl345_dev_handle = *adxl345_dev_handle;
 
     /* Zero out the handle and link all callbacks */
