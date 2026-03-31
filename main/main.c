@@ -1,4 +1,5 @@
 #include "sx1262.h"
+#include "itg3205.h"
 #include "esp_log.h"
 #include "driver/uart.h"
 #include "parse/nmea.h"
@@ -187,7 +188,8 @@ void app_main(void) {
     i2c_master_bus_handle_t bus_handle;
     i2c_master_dev_handle_t bme280_dev_handle;
     i2c_master_dev_handle_t adxl345_dev_handle;
-    i2c_master_dev_handle_t hmc5883l_dev_handle;
+    i2c_master_dev_handle_t itg3205_dev_handle;
+
     struct bme280_settings settings;
     struct bme280_dev device;
     uint32_t period = 100000;
@@ -221,6 +223,21 @@ void app_main(void) {
     adxl345_set_range(&adxl345_handle, ADXL345_RANGE_16G);
     adxl345_set_measure(&adxl345_handle, ADXL345_BOOL_TRUE);
 
+
+    /* ITG3205 Init */
+    itg3205_i2c_init(&bus_handle, &itg3205_dev_handle);
+    itg3205_power_config_t init_power_config = {
+        .reset = 1, /* Reset registers in chip */
+        .sleep = 0,
+        .stby_x = 0,
+        .stby_y = 0,
+        .stby_z = 0,
+        .clk_sel = 0x0
+    };
+
+    itg3205_set_power(&itg3205_dev_handle, &init_power_config);
+
+
     while (1) {
 
         /* BME280 Read */
@@ -243,5 +260,20 @@ void app_main(void) {
         ESP_LOGI(TAG, "Accel X: %.3f g, Y: %.3f g, Z: %.3f g", accel_g[0], accel_g[1], accel_g[2]);
 
         vTaskDelay(pdMS_TO_TICKS(500));
+
+
+        /* ITG3205 Read */
+        int16_t raw_temp;
+        ESP_ERROR_CHECK(itg3205_read_temp(&itg3205_dev_handle, &raw_temp));
+        float temp = itg3205_raw_temp_to_c(raw_temp);
+
+        int16_t gyro_x, gyro_y, gyro_z;
+        ESP_ERROR_CHECK(itg3205_read_gyro_x(&itg3205_dev_handle, &gyro_x));
+        ESP_ERROR_CHECK(itg3205_read_gyro_y(&itg3205_dev_handle, &gyro_y));
+        ESP_ERROR_CHECK(itg3205_read_gyro_z(&itg3205_dev_handle, &gyro_z));
+
+        ESP_LOGI(TAG, "Gyro Temp: %.3f C", temp);
+        ESP_LOGI(TAG, "Gyro X: %.3f dps, Y: %.3f dps, Z: %.3f dps",
+                 itg3205_raw_to_dps(gyro_x), itg3205_raw_to_dps(gyro_y), itg3205_raw_to_dps(gyro_z));
     }
 }
