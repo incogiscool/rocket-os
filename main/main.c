@@ -174,7 +174,6 @@ static const char *TAG = "MAIN";
 
 #include "bme280_port.h"
 #include "adxl345_port.h"
-#include "hmc5883l_port.h"
 #include "gpio/i2c.h"
 #include "lib/BME280_SensorAPI/bme280.h"
 #include "esp_log.h"
@@ -222,17 +221,6 @@ void app_main(void) {
     adxl345_set_range(&adxl345_handle, ADXL345_RANGE_16G);
     adxl345_set_measure(&adxl345_handle, ADXL345_BOOL_TRUE);
 
-    /* HMC5883L init */
-    hmc5883l_intf_ctx_t hmc5883l_intf_ctx;
-    hmc5883l_handle_t hmc5883l_handle;
-    ESP_ERROR_CHECK(hmc5883l_full_init(&bus_handle, &hmc5883l_dev_handle, &hmc5883l_intf_ctx, &hmc5883l_handle));
-
-    /* Configure HMC5883L: default gain, 15Hz output, normal mode */
-    /* Need to calibrate? */
-    hmc5883l_set_gain(&hmc5883l_handle, HMC5883L_GAIN_1090);
-    hmc5883l_set_data_output_rate(&hmc5883l_handle, HMC5883L_DATA_OUTPUT_RATE_15);
-    hmc5883l_set_mode(&hmc5883l_handle, HMC5883L_MODE_NORMAL);
-
     while (1) {
 
         /* BME280 Read */
@@ -253,15 +241,6 @@ void app_main(void) {
             ESP_LOGE(TAG, "ADXL345 read failed.");
         }
         ESP_LOGI(TAG, "Accel X: %.3f g, Y: %.3f g, Z: %.3f g", accel_g[0], accel_g[1], accel_g[2]);
-
-        /* HMC5883L Read */
-        int16_t mag_raw[3];
-        float mag_gauss[3];
-        uint8_t mag_rslt = hmc5883l_single_read(&hmc5883l_handle, mag_raw, mag_gauss);
-        if (mag_rslt != 0) {
-            ESP_LOGE(TAG, "HMC5883L read failed.");
-        }
-        ESP_LOGI(TAG, "Mag X: %.3f mG, Y: %.3f mG, Z: %.3f mG", mag_gauss[0], mag_gauss[1], mag_gauss[2]);
 
         vTaskDelay(pdMS_TO_TICKS(500));
     }

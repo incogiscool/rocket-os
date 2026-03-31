@@ -72,6 +72,17 @@ void adxl345_debug_print_cb(const char *const fmt, ...) {
 }
 
 
+void adxl345_receive_cb(uint8_t type) {
+    (void)type;
+}
+
+
+uint8_t adxl345_spi_init_cb(void) { return 0; }
+uint8_t adxl345_spi_deinit_cb(void) { return 0; }
+uint8_t adxl345_spi_read_cb(uint8_t reg, uint8_t *buf, uint16_t len) { return 0; }
+uint8_t adxl345_spi_write_cb(uint8_t reg, uint8_t *buf, uint16_t len) { return 0; }
+
+
 esp_err_t adxl345_full_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *adxl345_dev_handle, adxl345_handle_t *handle) {
 
     ESP_ERROR_CHECK(adxl345_i2c_init(bus_handle, adxl345_dev_handle));
@@ -83,8 +94,13 @@ esp_err_t adxl345_full_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_
     DRIVER_ADXL345_LINK_IIC_DEINIT(handle, adxl345_iic_deinit_cb);
     DRIVER_ADXL345_LINK_IIC_READ(handle, adxl345_iic_read_cb);
     DRIVER_ADXL345_LINK_IIC_WRITE(handle, adxl345_iic_write_cb);
+    DRIVER_ADXL345_LINK_SPI_INIT(handle, adxl345_spi_init_cb);
+    DRIVER_ADXL345_LINK_SPI_DEINIT(handle, adxl345_spi_deinit_cb);
+    DRIVER_ADXL345_LINK_SPI_READ(handle, adxl345_spi_read_cb);
+    DRIVER_ADXL345_LINK_SPI_WRITE(handle, adxl345_spi_write_cb);
     DRIVER_ADXL345_LINK_DELAY_MS(handle, adxl345_delay_ms_cb);
     DRIVER_ADXL345_LINK_DEBUG_PRINT(handle, adxl345_debug_print_cb);
+    DRIVER_ADXL345_LINK_RECEIVE_CALLBACK(handle, adxl345_receive_cb);
 
     /* Set to I2C interface with ADDR pin to GND */
     adxl345_set_interface(handle, ADXL345_INTERFACE_IIC);
