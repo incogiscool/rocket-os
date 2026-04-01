@@ -59,4 +59,3 @@ esp_err_t sx1262_receive(sx1262_t *device, uint8_t *data, uint8_t *len);
 esp_err_t sx1262_set_packet_params(sx1262_t *device, uint16_t preamble_len, uint8_t header_type, uint8_t payload_len, uint8_t crc, uint8_t invert_iq);
 esp_err_t sx1262_set_dio_irq_params(sx1262_t *device);
 
-/* TODO: Write RSSI driver */
