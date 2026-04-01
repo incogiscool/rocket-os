@@ -4,6 +4,8 @@
  * permitted by applicable law. You can redistribute it and/or modify it under
  * the terms of the Do What The Fuck You Want To Public License, Version 2, as
  * published by Sam Hocevar. See the COPYING file for more details.
+ * --
+ * Also adjusted by Adam El Taha & Claude Code
  */
 
 #ifndef MINMEA_H
@@ -314,7 +316,33 @@ static inline bool minmea_isfield(char c) {
 
 
 
-void parseNmea(char *line);
+typedef struct {
+    /* Position */
+    float latitude;          /* Decimal degrees */
+    float longitude;         /* Decimal degrees */
+    float altitude;          /* Meters */
+
+    /* Velocity */
+    float speed_knots;
+    float speed_kph;
+    float course;            /* True course over ground (degrees) */
+
+    /* Accuracy */
+    int fix_quality;         /* 0 = no fix, 1 = GPS, 2 = DGPS, etc. */
+    int satellites_tracked;
+    float hdop;
+    float pdop;
+    float vdop;
+
+    /* Time & Date */
+    struct minmea_time time;
+    struct minmea_date date;
+
+    /* Status */
+    bool valid;              /* RMC validity flag */
+} nmea_gps_data_t;
+
+void parseNmea(char *line, nmea_gps_data_t *gps);
 
 #ifdef __cplusplus
 }
