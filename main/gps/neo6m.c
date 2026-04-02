@@ -1,5 +1,7 @@
 #include "neo6m.h"
 #include "driver/uart.h"
+#include "parse/nmea.h"
+#include <string.h>
 
 void neo6m_init() {
     uart_config_t uart_config = {
@@ -26,6 +28,25 @@ int neo6m_read(uint8_t *buffer) {
     }
 
     return len;
+}
+
+nmea_gps_data_t neo6m_read_parsed() {
+    uint8_t buffer[NEO6M_UART_BUF_SIZE];
+    nmea_gps_data_t gps = {0};
+
+    int len = neo6m_read(buffer);
+
+    if (len > 0) {
+        char *line = strtok((char *)buffer, "\r\n");
+        while (line != NULL) {
+            if (line[0] == '$') {
+                parseNmea(line, &gps);
+            }
+            line = strtok(NULL, "\r\n");
+        }
+    }
+
+    return gps;
 }
 
 /* NOTE: NMEA sentences are split up by \n, so we need to split up the data by line when parsing and check if starts with $*/

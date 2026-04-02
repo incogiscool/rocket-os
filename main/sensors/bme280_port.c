@@ -2,6 +2,7 @@
 #include "freertos/FreeRTOS.h"
 #include <rom/ets_sys.h>
 #include <string.h>
+#include <math.h>
 #include "esp_log.h"
 
 static const char *TAG = "BME280_PORT";
@@ -80,4 +81,20 @@ esp_err_t bme280_full_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_h
     *device_struct = device;
 
     return (rslt == BME280_OK) ? ESP_OK : ESP_FAIL;
+}
+
+void bme280_set_settings(struct bme280_settings *settings) {
+    settings->filter = BME280_FILTER_COEFF_2;
+    settings->osr_h = BME280_OVERSAMPLING_4X;
+    settings->osr_p = BME280_OVERSAMPLING_4X;
+    settings->osr_t = BME280_OVERSAMPLING_4X;
+    settings->standby_time = BME280_STANDBY_TIME_0_5_MS;
+}
+
+int32_t bme280_output_to_altitude(struct bme280_data *data) {
+    /* h = (T0 / L) * (1 - (P / P0) ^ (R*L / g*M)) */
+    float ratio = (float)data->pressure / BME280_SEA_LEVEL_PRESSURE_PA;
+    float altitude = (BME280_SEA_LEVEL_TEMP_K / BME280_TEMP_LAPSE_RATE) * (1.0f - powf(ratio, BME280_HYPSOMETRIC_EXP));
+
+    return (int32_t)altitude;
 }

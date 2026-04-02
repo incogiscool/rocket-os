@@ -5,6 +5,12 @@
 
 #define BME280_I2C_ADDR 0x76
 
+/* Hypsometric formula constants */
+#define BME280_SEA_LEVEL_PRESSURE_PA  101325.0f  /* Standard sea level pressure (Pa) */
+#define BME280_SEA_LEVEL_TEMP_K       288.15f    /* Standard sea level temperature (K) */
+#define BME280_TEMP_LAPSE_RATE        0.0065f    /* Temperature lapse rate (K/m) */
+#define BME280_HYPSOMETRIC_EXP        0.190263f  /* R*L / (g*M) = 8.31446*0.0065 / (9.80665*0.0289644) */
+
 
 /* Context passed to every callback via intf_ptr */
 typedef struct {
@@ -33,3 +39,7 @@ void user_delay_us(uint32_t period_us, void *intf_ptr);
     };
  */
 esp_err_t bme280_full_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *bme280_dev_handle, bme280_intf_ctx_t *intf_ctx, struct bme280_dev *device_struct);
+
+void bme280_set_settings(struct bme280_settings *settings);
+
+int32_t bme280_output_to_altitude(struct bme280_data *data);

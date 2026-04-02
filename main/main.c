@@ -205,11 +205,7 @@ void app_main(void) {
     rslt = bme280_get_sensor_settings(&settings, &device);
 
     /* Configuring the over-sampling rate, filter coefficient and standby time */
-    settings.filter = BME280_FILTER_COEFF_2;
-    settings.osr_h = BME280_OVERSAMPLING_4X;
-    settings.osr_p = BME280_OVERSAMPLING_4X;
-    settings.osr_t = BME280_OVERSAMPLING_4X;
-    settings.standby_time = BME280_STANDBY_TIME_0_5_MS;
+    bme280_set_settings(&settings);
 
     rslt = bme280_set_sensor_settings(BME280_SEL_ALL_SETTINGS, &settings, &device);
     rslt = bme280_set_sensor_mode(BME280_POWERMODE_NORMAL, &device);
@@ -237,6 +233,9 @@ void app_main(void) {
 
     itg3205_set_power(&itg3205_dev_handle, &init_power_config);
 
+    /* NEO-6M Init */
+    neo6m_init();
+    nmea_gps_data_t gps = {0};
 
     while (1) {
 
@@ -247,12 +246,13 @@ void app_main(void) {
         if (rslt != BME280_OK) {
             ESP_LOGE(TAG, "BME280 read failed.");
         }
+
         ESP_LOGI(TAG, "Pressure: %f\nTemperature: %f\nHumidity: %f", comp_data.pressure, comp_data.temperature, comp_data.humidity);
 
         /* ADXL345 Read */
         int16_t accel_raw[3];
         float accel_g[3];
-        uint16_t accel_len = 1;
+        uint16_t accel_len = 1; /* Sets the chip to bypass mode - only take one input per measurement. Maybe we should switch to stream mode (32 measurements) then avg? */
         uint8_t accel_rslt = adxl345_read(&adxl345_handle, (int16_t (*)[3])&accel_raw, (float (*)[3])&accel_g, &accel_len);
         if (accel_rslt != 0) {
             ESP_LOGE(TAG, "ADXL345 read failed.");
@@ -275,5 +275,13 @@ void app_main(void) {
         ESP_LOGI(TAG, "Gyro Temp: %.3f C", temp);
         ESP_LOGI(TAG, "Gyro X: %.3f dps, Y: %.3f dps, Z: %.3f dps",
                  itg3205_raw_to_dps(gyro_x), itg3205_raw_to_dps(gyro_y), itg3205_raw_to_dps(gyro_z));
+
+        /* NEO 6M Read */
+        gps = neo6m_read_parsed();
+
+        ESP_LOGI(TAG, "GPS valid: %s, Lat: %.6f, Lon: %.6f, Alt: %.1f m, Sats: %d",
+                 gps.valid ? "yes" : "no",
+                 gps.latitude, gps.longitude, gps.altitude,
+                 gps.satellites_tracked);
     }
 }
