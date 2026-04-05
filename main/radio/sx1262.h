@@ -4,7 +4,6 @@
 
 /* Chip select pin for the radio module (NSS pin on module, active low) */
 #define SX1262_SPI_CS_PIN 2
-
 #define SX1262_NRST 21 /* Reset pin, resets the chip when low, put back to high to bring back. Used to put the chip in a known state */
 #define SX1262_BUSY 16 /* Busy pin (can't perform any actions when this is high) */
 #define SX1262_DI01 17 /* Digital interrupt pin 1, high when action is done (packet recieved, transmit done, timeout, etc.) */

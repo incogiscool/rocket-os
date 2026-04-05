@@ -5,7 +5,7 @@
 
 #define SPI_CLK_PIN 18
 #define SPI_MISO_PIN 19
-#define SPI_MOSI_PIN 23
+#define SPI_MOSI_PIN 13
 
 #define SPI_CLK_SPEED 1000000 /* For now define 1Mhz, possibly go up to 16 later on */
 

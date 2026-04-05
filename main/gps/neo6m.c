@@ -1,7 +1,10 @@
 #include "neo6m.h"
 #include "driver/uart.h"
 #include "parse/nmea.h"
+#include "esp_log.h"
 #include <string.h>
+
+static const char *TAG = "NEO6M";
 
 void neo6m_init() {
     uart_config_t uart_config = {
@@ -36,15 +39,26 @@ nmea_gps_data_t neo6m_read_parsed() {
 
     int len = neo6m_read(buffer);
 
-    if (len > 0) {
-        char *line = strtok((char *)buffer, "\r\n");
-        while (line != NULL) {
-            if (line[0] == '$') {
-                parseNmea(line, &gps);
-            }
-            line = strtok(NULL, "\r\n");
-        }
+    if (len <= 0) {
+        ESP_LOGW(TAG, "No UART data received from GPS module");
+        return gps;
     }
+
+    ESP_LOGD(TAG, "UART read %d bytes", len);
+
+    int sentence_count = 0;
+    char *line = strtok((char *)buffer, "\r\n");
+    while (line != NULL) {
+        if (line[0] == '$') {
+            ESP_LOGD(TAG, "NMEA: %s", line);
+            parseNmea(line, &gps);
+            sentence_count++;
+        }
+        line = strtok(NULL, "\r\n");
+    }
+
+    ESP_LOGI(TAG, "Parsed %d sentences, fix=%d, sats=%d",
+             sentence_count, gps.fix_quality, gps.satellites_tracked);
 
     return gps;
 }
