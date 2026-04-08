@@ -11,7 +11,10 @@
 
 static const char *TAG = "SENSOR_COLLECTION";
 
-void vSensorTelemetryTask(void *pvParameters) {
+void vSensorCollectionTask(void *pvParameters) {
+    QueueHandle_t xSensorTelemetryQueue = (QueueHandle_t)pvParameters;
+
+
     /* I2C Setup */
     i2c_master_bus_handle_t bus_handle;
     i2c_master_dev_handle_t bme280_device_handle;   /* Barometer */
@@ -111,6 +114,8 @@ void vSensorTelemetryTask(void *pvParameters) {
 
         vTaskDelay(pdMS_TO_TICKS(250));
 
+        
+        xQueueSendToBack(xSensorTelemetryQueue, &packet, pdTICKS_TO_MS(250));
     };
 
 

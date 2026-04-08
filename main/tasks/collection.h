@@ -2,6 +2,9 @@
 
 #include "transmission.h"
 
-#define SENSOR_TELEMETRY_STACK_SIZE ( sizeof( sensor_telemetry_packet_t ) * 10 ) /* Enough for 10 packets in the queue */
+/* Note we may need to increase this */
+#define SENSOR_COLLECTION_TASK_STACK_SIZE 4096 /* Words, not bytes. 1 word is 4 bits in 32 bit system like esp32. */
+#define SENSOR_TELEMETRY_QUEUE_SIZE 10
+#define SENSOR_COLLECTION_TASK_PRIORITY 1
 
-void vSensorTelemetryTask(void *pvParameters);
+void vSensorCollectionTask(void *pvParameters);
