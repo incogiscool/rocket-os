@@ -2,6 +2,8 @@
 
 #include "transmission.h"
 
-#define GPS_TELEMETRY_STACK_SIZE ( sizeof( gps_telemetry_packet_t ) * 10 ) /* Enough for 10 packets in the queue */
+#define GPS_COLLECTION_TASK_STACK_SIZE 4096
+#define GPS_TELEMETRY_QUEUE_SIZE 10
+#define GPS_COLLECTION_TASK_PRIORITY 1
 
-void vGPSTelemetryTask(void *pvParameters);
+void vGPSCollectionTask(void *pvParameters);

@@ -183,6 +183,7 @@ static const char *TAG = "MAIN";
 #include "freertos/task.h"
 #include "tasks/collection.h"
 #include "tasks/gps_collection.h"
+#include "tasks/gps_collection.h"
 #include "tasks/transmission.h"
 
 // void app_main(void) {
@@ -299,10 +300,21 @@ void app_main(void) {
 
     /* We will seperate tasks for sensor collection and gps collection so that if general sensor collection fails we still transmit gps. */
     TaskHandle_t sensor_collection_task_handle = NULL;
+    TaskHandle_t gps_collection_task_handle = NULL;
+    TaskHandle_t transmission_task_handle = NULL;
+
     QueueHandle_t xSensorTelemetryQueue = xQueueCreate(SENSOR_TELEMETRY_QUEUE_SIZE, sizeof(sensor_telemetry_packet_t));
+    QueueHandle_t xGPSQueue = xQueueCreate(GPS_TELEMETRY_QUEUE_SIZE, sizeof(gps_telemetry_packet_t));
 
-    /* TODO: GPS queue */
+    
 
-    BaseType_t err = xTaskCreate(vSensorCollectionTask, "SENSOR_COLLECTION", SENSOR_COLLECTION_TASK_STACK_SIZE, (void *) xSensorTelemetryQueue, SENSOR_COLLECTION_TASK_PRIORITY, &sensor_collection_task_handle);
+    transmission_task_params_t tx_params = {
+    .xSensorQueue = xSensorTelemetryQueue,
+    .xGPSQueue = xGPSQueue,
+    };
+
+    xTaskCreate(vSensorCollectionTask, "SENSOR_COLLECTION", SENSOR_COLLECTION_TASK_STACK_SIZE, (void *) xSensorTelemetryQueue, SENSOR_COLLECTION_TASK_PRIORITY, &sensor_collection_task_handle);
+    xTaskCreate(vGPSCollectionTask, "GPS_COLLECTION", GPS_COLLECTION_TASK_STACK_SIZE, (void *) xGPSQueue, GPS_COLLECTION_TASK_PRIORITY, &gps_collection_task_handle);
+    xTaskCreate(vTransmissionTask, "TRANSMISSION", TRANSMISSION_TASK_STACK_SIZE, (void *) &tx_params, TRANSMISSION_TASK_PRIORITY, &transmission_task_handle);
 
 }
