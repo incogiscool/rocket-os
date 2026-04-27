@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
+#include "sx1262.h"
 
 #define CALLSIGN_ID 0x88
 
@@ -46,6 +47,7 @@ typedef struct __attribute__((packed)) {
 typedef struct {
     QueueHandle_t xSensorQueue;
     QueueHandle_t xGPSQueue;
+    sx1262_t *radio;
 } transmission_task_params_t;
 
 

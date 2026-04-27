@@ -298,6 +298,24 @@ static const char *TAG = "MAIN";
 
 void app_main(void) {
 
+    /* Radio init — must match ground-station RadioLib config:
+       LoRa, 915 MHz, SF=7, BW=125 kHz (0x04), CR=4/5 (0x01), LDRO off,
+       preamble=12, explicit header, CRC on, IQ normal. */
+    static sx1262_t radio;
+    esp_err_t ret = sx1262_init(&radio);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Radio init failed: %d", ret);
+        return;
+    }
+
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_standby(&radio, SX1262_STDBY_RC));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_packet_type(&radio, SX1262_PACKET_TYPE_LORA));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_rf_frequency(&radio, RF_FREQ_HZ));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_mod_params_lora(&radio, 7, 0x04, 0x01, 0x00));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_tx_params(&radio, 22, 0x04));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_dio_irq_params(&radio));
+    ESP_LOGI(TAG, "Radio configured for TX");
+
     /* We will seperate tasks for sensor collection and gps collection so that if general sensor collection fails we still transmit gps. */
     TaskHandle_t sensor_collection_task_handle = NULL;
     TaskHandle_t gps_collection_task_handle = NULL;
@@ -306,12 +324,10 @@ void app_main(void) {
     QueueHandle_t xSensorTelemetryQueue = xQueueCreate(SENSOR_TELEMETRY_QUEUE_SIZE, sizeof(sensor_telemetry_packet_t));
     QueueHandle_t xGPSQueue = xQueueCreate(GPS_TELEMETRY_QUEUE_SIZE, sizeof(gps_telemetry_packet_t));
 
-    
-
-    transmission_task_params_t tx_params = {
-    .xSensorQueue = xSensorTelemetryQueue,
-    .xGPSQueue = xGPSQueue,
-    };
+    static transmission_task_params_t tx_params;
+    tx_params.xSensorQueue = xSensorTelemetryQueue;
+    tx_params.xGPSQueue = xGPSQueue;
+    tx_params.radio = &radio;
 
     xTaskCreate(vSensorCollectionTask, "SENSOR_COLLECTION", SENSOR_COLLECTION_TASK_STACK_SIZE, (void *) xSensorTelemetryQueue, SENSOR_COLLECTION_TASK_PRIORITY, &sensor_collection_task_handle);
     xTaskCreate(vGPSCollectionTask, "GPS_COLLECTION", GPS_COLLECTION_TASK_STACK_SIZE, (void *) xGPSQueue, GPS_COLLECTION_TASK_PRIORITY, &gps_collection_task_handle);

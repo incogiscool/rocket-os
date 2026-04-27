@@ -103,6 +103,7 @@ void vSensorCollectionTask(void *pvParameters) {
             .acceleration = accel_raw[0], /* TODO: Change this to whatever the vertical orientation is of the GPS. */
             .altitude = bme280_output_to_altitude(&bme280_output),
             .callsign_id = CALLSIGN_ID,
+            .packet_type = TELEMETRY_PACKET_TYPE_SENSOR,
             .heading = 0, /* TODO: Magnetometer Heading */
             .seq = 0, /* TODO: Track sequence number */
             .speed = 100, /* TODO: Placeholder until calculated */
