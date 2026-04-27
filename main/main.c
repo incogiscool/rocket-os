@@ -309,10 +309,16 @@ void app_main(void) {
     }
 
     ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_standby(&radio, SX1262_STDBY_RC));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_regulator_mode(&radio, SX1262_REGULATOR_DCDC));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_dio2_as_rf_switch(&radio, 1));
     ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_packet_type(&radio, SX1262_PACKET_TYPE_LORA));
     ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_rf_frequency(&radio, RF_FREQ_HZ));
-    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_mod_params_lora(&radio, 7, 0x04, 0x01, 0x00));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_calibrate_image(&radio, 0xD7, 0xDB));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_pa_config(&radio, 0x04, 0x07, 0x00, 0x01));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_fix_tx_clamp(&radio));
     ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_tx_params(&radio, 22, 0x04));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_buffer_base_address(&radio, 0, 0));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_mod_params_lora(&radio, 7, 0x04, 0x01, 0x00));
     ESP_ERROR_CHECK_WITHOUT_ABORT(sx1262_set_dio_irq_params(&radio));
     ESP_LOGI(TAG, "Radio configured for TX");
 

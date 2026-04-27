@@ -368,3 +368,92 @@ esp_err_t sx1262_set_dio_irq_params(sx1262_t *device) {
 
     return spi_write(device->device_handle, cmd, sizeof(cmd));
 }
+
+esp_err_t sx1262_set_dio2_as_rf_switch(sx1262_t *device, uint8_t enable) {
+    sx1262_wait_busy();
+
+    uint8_t cmd[] = { SX1262_OP_SET_DIO2_RF_SWITCH, enable };
+
+    return spi_write(device->device_handle, cmd, sizeof(cmd));
+}
+
+esp_err_t sx1262_set_regulator_mode(sx1262_t *device, uint8_t mode) {
+    sx1262_wait_busy();
+
+    uint8_t cmd[] = { SX1262_OP_SET_REGULATOR_MODE, mode };
+
+    return spi_write(device->device_handle, cmd, sizeof(cmd));
+}
+
+/* For SX1262 +22 dBm: paDutyCycle=0x04, hpMax=0x07, deviceSel=0x00, paLut=0x01. */
+esp_err_t sx1262_set_pa_config(sx1262_t *device, uint8_t pa_duty_cycle, uint8_t hp_max, uint8_t device_sel, uint8_t pa_lut) {
+    sx1262_wait_busy();
+
+    uint8_t cmd[] = { SX1262_OP_SET_PA_CONFIG, pa_duty_cycle, hp_max, device_sel, pa_lut };
+
+    return spi_write(device->device_handle, cmd, sizeof(cmd));
+}
+
+/* For 902-928 MHz: freq1=0xD7, freq2=0xDB. */
+esp_err_t sx1262_calibrate_image(sx1262_t *device, uint8_t freq1, uint8_t freq2) {
+    sx1262_wait_busy();
+
+    uint8_t cmd[] = { SX1262_OP_CALIBRATE_IMAGE, freq1, freq2 };
+
+    return spi_write(device->device_handle, cmd, sizeof(cmd));
+}
+
+esp_err_t sx1262_set_buffer_base_address(sx1262_t *device, uint8_t tx_base, uint8_t rx_base) {
+    sx1262_wait_busy();
+
+    uint8_t cmd[] = { SX1262_OP_SET_BUFFER_BASE_ADDR, tx_base, rx_base };
+
+    return spi_write(device->device_handle, cmd, sizeof(cmd));
+}
+
+esp_err_t sx1262_write_register(sx1262_t *device, uint16_t addr, const uint8_t *data, uint8_t len) {
+    sx1262_wait_busy();
+
+    uint8_t cmd[3 + len];
+    cmd[0] = SX1262_OP_WRITE_REGISTER;
+    cmd[1] = (addr >> 8) & 0xFF;
+    cmd[2] = addr & 0xFF;
+    for (uint8_t i = 0; i < len; i++) {
+        cmd[3 + i] = data[i];
+    }
+
+    return spi_write(device->device_handle, cmd, sizeof(cmd));
+}
+
+esp_err_t sx1262_read_register(sx1262_t *device, uint16_t addr, uint8_t *data, uint8_t len) {
+    sx1262_wait_busy();
+
+    /* ReadRegister: opcode, addr_msb, addr_lsb, NOP, then `len` bytes returned. */
+    uint8_t tx[4 + len];
+    uint8_t rx[4 + len];
+    memset(tx, 0, sizeof(tx));
+    memset(rx, 0, sizeof(rx));
+
+    tx[0] = SX1262_OP_READ_REGISTER;
+    tx[1] = (addr >> 8) & 0xFF;
+    tx[2] = addr & 0xFF;
+
+    esp_err_t res = spi_read(device->device_handle, tx, rx, sizeof(tx));
+
+    for (uint8_t i = 0; i < len; i++) {
+        data[i] = rx[4 + i];
+    }
+
+    return res;
+}
+
+/* TX power clamp workaround per datasheet errata 15.2: OR reg 0x08D8 with 0x1E. */
+esp_err_t sx1262_fix_tx_clamp(sx1262_t *device) {
+    uint8_t reg = 0;
+    esp_err_t res = sx1262_read_register(device, SX1262_REG_TX_CLAMP, &reg, 1);
+    if (res != ESP_OK) return res;
+
+    reg |= 0x1E;
+
+    return sx1262_write_register(device, SX1262_REG_TX_CLAMP, &reg, 1);
+}

@@ -30,6 +30,19 @@
 #define SX1262_OP_SET_TX               0x83
 #define SX1262_OP_SET_RX               0x82
 #define SX1262_OP_GET_RX_BUFFER_STATUS 0x13
+#define SX1262_OP_SET_DIO2_RF_SWITCH   0x9D
+#define SX1262_OP_SET_REGULATOR_MODE   0x96
+#define SX1262_OP_SET_PA_CONFIG        0x95
+#define SX1262_OP_CALIBRATE_IMAGE      0x98
+#define SX1262_OP_WRITE_REGISTER       0x0D
+#define SX1262_OP_READ_REGISTER        0x1D
+
+/* Regulator modes */
+#define SX1262_REGULATOR_LDO   0x00
+#define SX1262_REGULATOR_DCDC  0x01
+
+/* TX clamp workaround register (datasheet errata 15.2) */
+#define SX1262_REG_TX_CLAMP    0x08D8
 
 /* Standby modes */
 #define SX1262_STDBY_RC    0x00
@@ -57,4 +70,12 @@ esp_err_t sx1262_transmit(sx1262_t *device, uint8_t *data, uint8_t len);
 esp_err_t sx1262_receive(sx1262_t *device, uint8_t *data, uint8_t *len);
 esp_err_t sx1262_set_packet_params(sx1262_t *device, uint16_t preamble_len, uint8_t header_type, uint8_t payload_len, uint8_t crc, uint8_t invert_iq);
 esp_err_t sx1262_set_dio_irq_params(sx1262_t *device);
+esp_err_t sx1262_set_dio2_as_rf_switch(sx1262_t *device, uint8_t enable);
+esp_err_t sx1262_set_regulator_mode(sx1262_t *device, uint8_t mode);
+esp_err_t sx1262_set_pa_config(sx1262_t *device, uint8_t pa_duty_cycle, uint8_t hp_max, uint8_t device_sel, uint8_t pa_lut);
+esp_err_t sx1262_calibrate_image(sx1262_t *device, uint8_t freq1, uint8_t freq2);
+esp_err_t sx1262_set_buffer_base_address(sx1262_t *device, uint8_t tx_base, uint8_t rx_base);
+esp_err_t sx1262_write_register(sx1262_t *device, uint16_t addr, const uint8_t *data, uint8_t len);
+esp_err_t sx1262_read_register(sx1262_t *device, uint16_t addr, uint8_t *data, uint8_t len);
+esp_err_t sx1262_fix_tx_clamp(sx1262_t *device);
 
