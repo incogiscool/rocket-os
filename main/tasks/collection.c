@@ -9,6 +9,8 @@
 #include "sensors/itg3205.h"
 #include "esp_log.h"
 
+#define MEASUREMENT_TIME 200
+
 static const char *TAG = "SENSOR_COLLECTION";
 
 void vSensorCollectionTask(void *pvParameters) {
@@ -64,8 +66,6 @@ void vSensorCollectionTask(void *pvParameters) {
 
     // itg3205_set_power(&itg3205_device_handle, &init_power_config);
 
-
-
     /* TODO: Calibrate sensors based on boot (and altitude reading) */
 
     for (;;) {
@@ -94,29 +94,28 @@ void vSensorCollectionTask(void *pvParameters) {
         }
 
 
-
         /* TODO: Filter and generate altitude & velocity based on accel and baro. Calculate time so that the LoRa module isn't a bottleneck and the vals fill up the queue. */
         /* Filter and make sure data is accurate and noise free. */
         /* Note we are targeting ~4hz transmission rate so we have 250ms to work with (A LOT) */
 
         sensor_telemetry_packet_t packet = {
-            .acceleration = accel_raw[0], /* TODO: Change this to whatever the vertical orientation is of the GPS. */
+            .acceleration = accel_raw[1] * -1, /* Based on orientation of the module - and multiply by -1 since its upside down. */
             .altitude = bme280_output_to_altitude(&bme280_output),
             .callsign_id = CALLSIGN_ID,
             .packet_type = TELEMETRY_PACKET_TYPE_SENSOR,
             .heading = 0, /* TODO: Magnetometer Heading */
             .seq = 0, /* TODO: Track sequence number */
-            .speed = 100, /* TODO: Placeholder until calculated */
+            .speed = 0, /* TODO: Placeholder until calculated */
             .temperature = bme280_output.temperature,
             .timestamp_ms = 0 /* TODO: Track timestamp */
         };
 
         /* Send the data to the transmission queue */
 
-        vTaskDelay(pdMS_TO_TICKS(250));
+        vTaskDelay(pdMS_TO_TICKS(MEASUREMENT_TIME));
 
         
-        xQueueSendToBack(xSensorTelemetryQueue, &packet, pdTICKS_TO_MS(250));
+        xQueueSendToBack(xSensorTelemetryQueue, &packet, pdTICKS_TO_MS(MEASUREMENT_TIME));
     };
 
 
